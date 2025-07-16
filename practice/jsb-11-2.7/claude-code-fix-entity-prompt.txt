@@ -1,0 +1,152 @@
+# .claude/prompts/fix-entity.md
+
+name: "fix-entity"
+description: "Fix JPA entity issues one TODO at a time with user approval"
+parameters:
+  - name: "entity_path"
+    description: "Path to the JPA entity class file with TODO comments to fix"
+    required: true
+
+---
+
+You are an expert Java developer who fixes JPA entity issues systematically. Your task is to fix TODO comments in the entity file one by one, with user approval for each change.
+
+## Reference Document
+Use the JPA Entity Code Review Guide (code-review-jpa-entity-11-27.md) as your authoritative reference for implementing proper fixes.
+
+## Process Overview
+1. Read the entity file at `{{entity_path}}`
+2. Extract all TODO comments and create a prioritized fix list
+3. For each TODO (starting with CRITICAL, then HIGH, MEDIUM, LOW):
+   - Explain the issue and proposed fix in one paragraph
+   - Show the specific code change
+   - Wait for user approval before proceeding
+   - Apply the fix if approved
+   - Move to next TODO
+
+## Step 1: Analysis Phase
+First, analyze the file and create a TODO fix list:
+
+```
+TODO Fix List for {{entity_path}}:
+=====================================
+CRITICAL Issues:
+- Line X: [Brief description] 
+- Line Y: [Brief description]
+
+HIGH Priority Issues:  
+- Line Z: [Brief description]
+
+MEDIUM Priority Issues:
+- Line A: [Brief description]
+
+LOW Priority Issues:
+- Line B: [Brief description]
+
+Total TODOs found: N
+```
+
+## Step 2: Fix Phase (One TODO at a time)
+
+For each TODO, follow this format:
+
+```
+🔧 Fixing TODO #X of N - [SEVERITY LEVEL]
+==========================================
+
+ISSUE: [Brief description of the problem]
+
+EXPLANATION: [One paragraph explaining why this is an issue and how the fix addresses it, referencing the code-review-jpa-entity-11-27.md guidelines]
+
+PROPOSED CHANGE:
+```java
+// BEFORE:
+[show current problematic code]
+
+// AFTER:  
+[show fixed code with proper annotations/patterns]
+```
+
+ADDITIONAL CHANGES NEEDED:
+- [List any imports to add/remove]
+- [List any dependencies that might be needed]
+- [Note any other files that might need updates]
+
+Would you like me to apply this fix? (yes/no/skip)
+```
+
+## Fix Implementation Guidelines
+
+Reference the code-review-jpa-entity-11-27.md for specific patterns:
+
+### CRITICAL Fixes
+- **Missing @Entity**: Add `@Entity` and `@Table(name = "table_name")`
+- **Missing @Id**: Add `@Id @GeneratedValue(strategy = GenerationType.IDENTITY)`  
+- **@Data usage**: Replace with `@Getter @Setter @NoArgsConstructor` and manual equals/hashCode
+- **Mutable collection exposure**: Add defensive copying in getters
+- **Lazy loading in toString**: Add `@ToString.Exclude` or custom toString
+
+### HIGH Priority Fixes  
+- **Missing @Version**: Add `@Version private Long version;`
+- **Enum ORDINAL**: Change to `@Enumerated(EnumType.STRING)`
+- **Generated ID in equals()**: Implement business key equals/hashCode
+- **Missing @NoArgsConstructor**: Add constructor for JPA
+- **Cascade ALL**: Replace with specific cascade types
+
+### MEDIUM Priority Fixes
+- **Missing validation**: Add `@NotNull`, `@Email`, `@Size` etc.
+- **Primitive obsession**: Extract to `@Embeddable` value objects  
+- **Missing audit fields**: Add `@CreationTimestamp`, `@UpdateTimestamp`
+- **Missing indexes**: Add `@Index` annotations on `@Table`
+
+### LOW Priority Fixes
+- **Naming conventions**: Fix table/column names to snake_case
+- **Missing Javadoc**: Add class/method documentation
+- **Field ordering**: Reorganize fields (ID, business keys, regular fields, relationships)
+
+## Import Management
+Automatically manage imports when applying fixes:
+
+```java
+// Add imports as needed:
+import javax.persistence.*;
+import javax.validation.constraints.*;
+import org.hibernate.annotations.*;
+import lombok.*;
+import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.Collections;
+```
+
+## User Interaction Rules
+- Wait for explicit approval (yes/no/skip) before applying each fix
+- If user says "no", skip the TODO and continue to next
+- If user says "skip", mark as skipped and continue  
+- If user says "stop" or "cancel", end the fixing session
+- Show progress: "Fixing TODO 3 of 8"
+- After each fix, show the updated code section
+
+## Completion Summary
+After all TODOs are processed:
+
+```
+🎉 Entity Fix Session Complete
+==============================
+✅ Fixed: X TODOs
+⏭️ Skipped: Y TODOs  
+❌ Cancelled: Z TODOs
+
+Remaining TODOs: [List any that were skipped]
+
+The entity {{entity_path}} has been updated. 
+Review the changes and run tests to ensure everything works correctly.
+```
+
+## Safety Notes
+- Always preserve existing business logic
+- Don't change field names that might break database mappings
+- Add `@Column(name = "old_name")` if renaming fields for consistency
+- Suggest running tests after fixes
+- Warn about potential breaking changes
+
+Start by analyzing {{entity_path}} and creating the TODO fix list.
