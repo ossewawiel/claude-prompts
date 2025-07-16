@@ -1,0 +1,83 @@
+# .claude/prompts/review-entity.md
+
+name: "review-entity"
+description: "Review JPA entity class and add TODO comments for issues found"
+parameters:
+  - name: "entity_path"
+    description: "Path to the JPA entity class file (e.g., src/main/java/com/example/User.java)"
+    required: true
+
+---
+
+You are an expert Java developer reviewing JPA entities for Spring Boot 2.7 projects using Java 11. 
+
+## Task
+Analyze the JPA entity class at `{{entity_path}}` and add `// TODO:` comments directly in the code where issues are found. Each TODO should:
+1. Identify the specific issue
+2. Provide a concrete fix suggestion
+3. Include severity level: CRITICAL, HIGH, MEDIUM, or LOW
+
+## Reference Document
+Use the JPA Entity Code Review Guide (code-review-jpa-entity-11-27.md) as your authoritative reference for identifying issues and best practices.
+
+## Review Criteria - Check for:
+
+### CRITICAL Issues (Fix Immediately)
+- Missing `@Entity` annotation
+- No primary key (`@Id`) defined  
+- Using `@Data` on JPA entities
+- Mutable collections exposed directly
+- Lazy-loaded fields in `equals()`/`hashCode()`
+- Missing `@JsonIgnore` on bidirectional relationships
+- Sensitive data in `toString()` methods
+
+### HIGH Priority Issues
+- Missing `@Version` for optimistic locking
+- Incorrect enum mapping (`ORDINAL` instead of `STRING`)
+- No defensive copying for collection getters
+- Using generated ID in `equals()` before persistence
+- Missing `@NoArgsConstructor`
+- Cascade `ALL` without justification
+
+### MEDIUM Priority Issues  
+- Missing validation annotations
+- Primitive obsession (should use value objects)
+- No audit fields (`@CreationTimestamp`, `@UpdateTimestamp`)
+- Missing indexes on frequently queried fields
+- Hardcoded strings instead of constants
+
+### LOW Priority Issues
+- Inconsistent naming conventions
+- Missing Javadoc comments
+- Suboptimal field ordering
+- Missing `@BatchSize` on collections
+
+## Output Instructions
+1. Read the entity file at `{{entity_path}}`
+2. Analyze it against the review criteria
+3. Add `// TODO:` comments directly in the code where issues exist
+4. Format TODO comments as: `// TODO: [SEVERITY] Issue description - Fix: specific solution`
+5. Preserve all existing code and formatting
+6. Return the complete modified file content
+
+## Example TODO Format
+```java
+@Entity
+public class User {
+    // TODO: CRITICAL Missing @Table annotation - Fix: Add @Table(name = "users")
+    
+    @Id
+    private String email; // TODO: HIGH Use business key in equals() - Fix: Override equals()/hashCode() with email field
+    
+    // TODO: MEDIUM Add validation - Fix: Add @NotBlank @Email annotations
+    private String email;
+    
+    @ToString // TODO: HIGH Sensitive data exposure - Fix: Add exclude = {"password", "apiKey"}
+    private String password;
+    
+    @OneToMany(mappedBy = "user")
+    private List<Order> orders; // TODO: MEDIUM Mutable collection - Fix: Return Collections.unmodifiableList() in getter
+}
+```
+
+Please analyze `{{entity_path}}` and provide the enhanced code with TODO comments for all identified issues.

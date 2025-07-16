@@ -1,0 +1,256 @@
+# .claude/prompts/generate-entity-tests.md
+
+name: "generate-entity-tests"
+description: "Analyze JPA entity and generate comprehensive unit tests with interactive selection"
+parameters:
+  - name: "entity_path"
+    description: "Path to the JPA entity class (e.g., src/main/java/com/example/entity/User.java)"
+    required: true
+
+---
+
+You are an expert Java developer specializing in Spring Boot 2.7 and JPA entity testing. Your task is to analyze the provided entity class and generate comprehensive unit tests following enterprise-grade testing patterns.
+
+## Reference Documentation
+Use the "Enhanced JPA Entity Unit Testing Guide for Claude Code" as your authoritative reference for testing patterns, best practices, and code examples.
+
+## Analysis Process
+
+### Step 1: Entity Analysis
+First, analyze the entity class at `{{entity_path}}` and provide:
+
+```
+📋 ENTITY ANALYSIS SUMMARY
+========================
+Entity Name: [EntityName]
+Package: [package.path]
+Primary Key: [field name and type]
+Validation Annotations: [list of constraint annotations found]
+Relationships: [OneToMany, ManyToOne, etc.]
+Custom Methods: [equals, hashCode, toString, business methods]
+Lifecycle Callbacks: [@PrePersist, @PostUpdate, etc.]
+Potential Issues: [any code smells or missing patterns]
+```
+
+### Step 2: Test Strategy Recommendation
+Based on the entity analysis, recommend test categories with estimated coverage:
+
+```
+🎯 RECOMMENDED TEST STRATEGY (Target: 80%+ Coverage)
+================================================
+
+CRITICAL TESTS (Must Have - 40% coverage):
+□ Field Validation Tests
+  - @NotNull constraints for required fields
+  - @Size/@Length validation for string fields  
+  - @Email/@Pattern validation for formatted fields
+  - Custom validation annotations
+
+□ Entity Lifecycle Tests
+  - @PrePersist callback behavior
+  - @PreUpdate timestamp handling
+  - Default value initialization
+
+HIGH PRIORITY TESTS (Should Have - 25% coverage):
+□ Relationship Management Tests
+  - Bidirectional relationship integrity
+  - Collection add/remove operations
+  - Cascade behavior validation
+
+□ Business Logic Tests
+  - Custom equals() and hashCode() methods
+  - toString() excludes sensitive data
+  - Custom business methods
+
+□ Exception Handling Tests
+  - Constraint violation scenarios
+  - Custom exception throwing
+
+MEDIUM PRIORITY TESTS (Nice to Have - 15% coverage):
+□ Edge Case Tests
+  - Boundary value testing
+  - Null handling in custom methods
+  - Empty collection behavior
+
+□ Performance Tests
+  - Validation efficiency
+  - Large collection handling
+
+Total Estimated Tests: [X] tests for [Y]% coverage
+```
+
+### Step 3: Interactive Test Selection
+For each test category, ask for confirmation:
+
+```
+🔍 FIELD VALIDATION TESTS
+========================
+Detected fields requiring validation tests:
+
+1. email (String) - @NotNull, @Email
+   → Test: shouldRejectNullEmail()
+   → Test: shouldRejectInvalidEmailFormat()  
+   → Test: shouldAcceptValidEmail()
+   Generate these tests? (y/n):
+
+2. firstName (String) - @NotNull, @Size(min=2, max=50)
+   → Test: shouldRejectNullFirstName()
+   → Test: shouldRejectShortFirstName()
+   → Test: shouldRejectLongFirstName()
+   → Test: shouldAcceptValidFirstName()
+   Generate these tests? (y/n):
+
+[Continue for each field...]
+```
+
+### Step 4: Test Class Generation
+After user selections, generate the complete test class with:
+
+1. **Test Class Structure**:
+   ```java
+   @DisplayName("[Entity] Unit Tests")
+   class [Entity]UnitTest {
+       
+       private Validator validator;
+       
+       @BeforeEach
+       void setUp() {
+           validator = Validation.buildDefaultValidatorFactory().getValidator();
+       }
+       
+       // Test methods organized in @Nested classes
+   }
+   ```
+
+2. **Test Data Builder** (if entity is complex):
+   ```java
+   public class [Entity]TestDataBuilder {
+       // Builder pattern implementation
+   }
+   ```
+
+3. **Selected Test Methods** with:
+   - Proper `@DisplayName` annotations
+   - Given-When-Then structure
+   - AssertJ assertions
+   - Parameterized tests for multiple scenarios
+
+## Code Generation Guidelines
+
+### Test Method Template
+```java
+@Test
+@DisplayName("Should [expected behavior] when [condition]")
+void should[Behavior]_when[Condition]() {
+    // Given
+    [Entity] entity = [Entity]TestDataBuilder.a[Entity]()
+        .with[Field]([value])
+        .build();
+    
+    // When
+    [action or validation]
+    
+    // Then
+    assertThat([result]).[assertion]();
+}
+```
+
+### Validation Test Pattern
+```java
+@ParameterizedTest
+@DisplayName("Should reject invalid [field] values")
+@ValueSource(strings = {"", "invalid-value", "too-long-value"})
+void shouldRejectInvalid[Field]Values(String invalidValue) {
+    // Given
+    [Entity] entity = [Entity]TestDataBuilder.a[Entity]()
+        .with[Field](invalidValue)
+        .build();
+    
+    // When
+    Set<ConstraintViolation<[Entity]>> violations = validator.validate(entity);
+    
+    // Then
+    assertThat(violations)
+        .extracting(ConstraintViolation::getPropertyPath)
+        .extracting(Path::toString)
+        .contains("[fieldName]");
+}
+```
+
+### Relationship Test Pattern
+```java
+@Test
+@DisplayName("Should maintain bidirectional relationship when adding [child]")
+void shouldMaintainBidirectionalRelationship_whenAdding[Child]() {
+    // Given
+    [Entity] entity = [Entity]TestDataBuilder.a[Entity]().build();
+    [Child] child = [Child]TestDataBuilder.a[Child]().build();
+    
+    // When
+    entity.add[Child](child);
+    
+    // Then
+    assertThat(entity.get[Children]()).contains(child);
+    assertThat(child.get[Parent]()).isEqualTo(entity);
+}
+```
+
+## File Organization
+
+Create tests in the standard Maven/Gradle structure:
+- Test class: `src/test/java/[package]/[Entity]UnitTest.java`
+- Test builder: `src/test/java/[package]/[Entity]TestDataBuilder.java` (if needed)
+- Base test class: `src/test/java/[package]/ValidationTestBase.java` (if multiple entities)
+
+## Success Criteria
+
+The generated tests should:
+- ✅ Achieve 80%+ code coverage for the entity
+- ✅ Follow enterprise testing patterns from the reference guide
+- ✅ Use proper naming conventions and structure
+- ✅ Include comprehensive validation testing
+- ✅ Test all custom business logic
+- ✅ Validate relationship integrity
+- ✅ Use appropriate test data builders
+- ✅ Be maintainable and readable
+- ✅ Execute quickly (unit test performance)
+- ✅ Be independent and repeatable
+
+## Output Format
+
+1. **Analysis Summary** - Entity overview and test strategy
+2. **Interactive Selection** - User confirms each test category
+3. **Generated Files** - Complete test class(es) with selected tests
+4. **Coverage Report** - Estimated coverage achieved
+5. **Next Steps** - Recommendations for integration tests or improvements
+
+## Example Interaction Flow
+
+```
+> Analyzing entity at src/main/java/com/example/User.java...
+
+📋 ENTITY ANALYSIS SUMMARY
+========================
+Entity Name: User
+Primary Key: id (Long)
+Validation Annotations: @NotNull, @Email, @Size
+Relationships: @OneToMany(orders), @ManyToMany(roles)
+Custom Methods: equals(), hashCode(), addOrder(), removeOrder()
+
+🎯 RECOMMENDED TEST STRATEGY
+==========================
+CRITICAL TESTS (40% coverage):
+□ Field Validation Tests (8 tests)
+□ Entity Lifecycle Tests (3 tests)
+
+Generate Field Validation Tests? (y/n): y
+Generate Entity Lifecycle Tests? (y/n): y
+Generate Relationship Management Tests? (y/n): n
+
+✅ Generating UserUnitTest.java with 11 selected tests...
+✅ Generating UserTestDataBuilder.java...
+
+📊 COVERAGE ACHIEVED: 85% (11/13 testable methods)
+```
+
+Begin the analysis now for the entity at: `{{entity_path}}`
